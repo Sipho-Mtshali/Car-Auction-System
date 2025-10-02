@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarAuction - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fixed CSS paths - go up one directory level -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Main Dashboard -->
+    <div id="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <button class="mobile-menu-btn" id="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>CarAuction - Admin Panel</h1>
+            </div>
+            <div class="user-info">
+                <div class="notifications">
+                    <i class="fas fa-bell"></i>
+                    <div class="badge">5</div>
+                </div>
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin+User&background=3a86ff&color=fff" alt="Admin" id="user-avatar">
+                    <div>
+                        <div id="user-name">Admin User</div>
+                        <div class="role" id="user-role">Administrator</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Overlay -->
+        <div class="overlay" id="overlay"></div>
+
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <ul class="nav-links">
+                <li><a href="#" class="active" data-page="dashboard"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+                <li><a href="#" data-page="users"><i class="fas fa-users"></i> <span>User Management</span></a></li>
+                <li><a href="#" data-page="cars"><i class="fas fa-car"></i> <span>Car Approvals</span></a></li>
+                <li><a href="#" data-page="auctions"><i class="fas fa-gavel"></i> <span>Auctions</span></a></li>
+                <li><a href="#" data-page="reports"><i class="fas fa-chart-bar"></i> <span>Reports</span></a></li>
+                <li><a href="#" data-page="settings"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-wrapper">
+                <!-- Dashboard Content -->
+                <div id="dashboard-content">
+                    <!-- Top Bar -->
+                    <div class="top-bar">
+                        <div class="search-bar">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Search across users, cars, auctions...">
+                        </div>
+                        <div class="user-info">
+                            <button class="btn btn-primary" id="quick-stats-btn">
+                                <i class="fas fa-sync"></i> Refresh Stats
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="dashboard-cards">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Total Users</h3>
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="card-body">
+                                <h2 id="total-users">0</h2>
+                                <p><span class="status-badge status-active" id="users-growth">+0 this week</span></p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Active Auctions</h3>
+                                <i class="fas fa-gavel"></i>
+                            </div>
+                            <div class="card-body">
+                                <h2 id="active-auctions">0</h2>
+                                <p><span class="status-badge status-active" id="ending-auctions">0 ending today</span></p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Pending Approvals</h3>
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="card-body">
+                                <h2 id="pending-approvals">0</h2>
+                                <p><span class="status-badge status-pending">Require attention</span></p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Total Revenue</h3>
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="card-body">
+                                <h2 id="total-revenue">R0</h2>
+                                <p><span class="status-badge status-active" id="revenue-growth">+0% this month</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Stats Section -->
+                    <div class="admin-stats">
+                        <div class="chart-container">
+                            <h3 class="mb-20">Revenue & Activity Overview</h3>
+                            <canvas id="revenueChart" height="250"></canvas>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-icon" style="background-color: rgba(58, 134, 255, 0.2); color: var(--primary);">
+                                    <i class="fas fa-car"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h4>New Cars Listed</h4>
+                                    <p id="new-cars-listed">0</p>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon" style="background-color: rgba(6, 214, 160, 0.2); color: var(--success);">
+                                    <i class="fas fa-handshake"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h4>Deals Closed</h4>
+                                    <p id="deals-closed">0</p>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon" style="background-color: rgba(255, 209, 102, 0.2); color: var(--warning);">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h4>Pending Issues</h4>
+                                    <p id="pending-issues">0</p>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon" style="background-color: rgba(239, 71, 111, 0.2); color: var(--danger);">
+                                    <i class="fas fa-ban"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h4>Rejected Listings</h4>
+                                    <p id="rejected-listings">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity Section -->
+                    <h2 class="section-title">Recent System Activity</h2>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Item</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-activity-body">
+                                <!-- Activity items will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- User Management Content -->
+                <div id="users-content" class="hidden">
+                    <div class="top-bar">
+                        <h2>User Management</h2>
+                        <button class="btn btn-primary" id="add-user-btn">
+                            <i class="fas fa-plus"></i> Add New User
+                        </button>
+                    </div>
+                    
+                    <div class="tabs">
+                        <div class="tab active" data-tab="all-users">All Users</div>
+                        <div class="tab" data-tab="sellers">Sellers</div>
+                        <div class="tab" data-tab="buyers">Buyers</div>
+                        <div class="tab" data-tab="admins">Admins</div>
+                    </div>
+                    
+                    <div class="tab-content active" id="all-users-tab">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>User ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Join Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <!-- Users will be loaded dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Car Approvals Content -->
+                <div id="cars-content" class="hidden">
+                    <div class="top-bar">
+                        <h2>Car Approval Management</h2>
+                        <div class="search-bar" style="min-width: 300px;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Search cars by brand, model, seller...">
+                        </div>
+                    </div>
+                    
+                    <div class="tabs">
+                        <div class="tab active" data-tab="pending-cars">Pending Approval</div>
+                        <div class="tab" data-tab="approved-cars">Approved</div>
+                        <div class="tab" data-tab="rejected-cars">Rejected</div>
+                    </div>
+                    
+                    <div class="tab-content active" id="pending-cars-tab">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Car ID</th>
+                                        <th>Brand & Model</th>
+                                        <th>Year</th>
+                                        <th>Seller</th>
+                                        <th>Price</th>
+                                        <th>Listed Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pending-cars-body">
+                                    <!-- Pending cars will be loaded dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Auctions Content -->
+                <div id="auctions-content" class="hidden">
+                    <div class="top-bar">
+                        <h2>Auction Management</h2>
+                        <button class="btn btn-primary" id="create-auction-btn">
+                            <i class="fas fa-plus"></i> Create Auction
+                        </button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Auction ID</th>
+                                    <th>Car Details</th>
+                                    <th>Seller</th>
+                                    <th>Current Bid</th>
+                                    <th>Bids</th>
+                                    <th>Time Left</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auctions-table-body">
+                                <!-- Auctions will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Reports Content -->
+                <div id="reports-content" class="hidden">
+                    <div class="top-bar">
+                        <h2>Reports & Analytics</h2>
+                        <div>
+                            <button class="btn btn-outline"><i class="fas fa-download"></i> Export PDF</button>
+                            <button class="btn btn-primary"><i class="fas fa-file-excel"></i> Export Excel</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-stats">
+                        <div class="chart-container">
+                            <h3 class="mb-20">User Registration Trend</h3>
+                            <canvas id="usersChart" height="250"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 class="mb-20">Revenue by Payment Method</h3>
+                            <canvas id="paymentChart" height="250"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container mt-20">
+                        <h3 class="mb-20">Top Performing Sellers</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Seller</th>
+                                    <th>Total Listings</th>
+                                    <th>Sold Cars</th>
+                                    <th>Success Rate</th>
+                                    <th>Total Revenue</th>
+                                    <th>Rating</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-sellers-body">
+                                <!-- Top sellers will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Settings Content -->
+                <div id="settings-content" class="hidden">
+                    <div class="top-bar">
+                        <h2>System Settings</h2>
+                    </div>
+                    
+                    <div class="card mb-20">
+                        <div class="card-header">
+                            <h3>General Settings</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="site-name">Site Name</label>
+                                <input type="text" id="site-name" class="form-control" value="CarAuction">
+                            </div>
+                            <div class="form-group">
+                                <label for="admin-email">Admin Email</label>
+                                <input type="email" id="admin-email" class="form-control" value="admin@carauction.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="commission-rate">Commission Rate (%)</label>
+                                <input type="number" id="commission-rate" class="form-control" value="5" min="0" max="20">
+                            </div>
+                            <button class="btn btn-primary" id="save-general-settings">Save Changes</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Security Settings</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="session-timeout">Session Timeout (minutes)</label>
+                                <input type="number" id="session-timeout" class="form-control" value="60" min="15">
+                            </div>
+                            <div class="form-group">
+                                <label for="max-login-attempts">Max Login Attempts</label>
+                                <input type="number" id="max-login-attempts" class="form-control" value="5" min="3">
+                            </div>
+                            <div class="form-group">
+                                <label for="password-expiry">Password Expiry (days)</label>
+                                <input type="number" id="password-expiry" class="form-control" value="90" min="30">
+                            </div>
+                            <button class="btn btn-primary" id="save-security-settings">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Created By: Nkululeko Mthimunye | ©2025 | All Rights Reserved.</p>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal" id="add-user-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New User</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="add-user-form">
+                <div class="form-group">
+                    <label for="user-name">Full Name</label>
+                    <input type="text" id="user-name" class="form-control" placeholder="Enter full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="user-email">Email Address</label>
+                    <input type="email" id="user-email" class="form-control" placeholder="Enter email address" required>
+                </div>
+                <div class="form-group">
+                    <label for="user-role">User Role</label>
+                    <select id="user-role" class="form-control" required>
+                        <option value="">Select Role</option>
+                        <option value="buyer">Buyer</option>
+                        <option value="seller">Seller</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="user-password">Temporary Password</label>
+                    <input type="password" id="user-password" class="form-control" placeholder="Enter temporary password" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <span id="create-user-text">Create User</span>
+                        <span id="create-user-loading" class="hidden">Creating...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Auction Modal -->
+    <div class="modal" id="create-auction-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Auction</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="create-auction-form">
+                <div class="form-group">
+                    <label for="auction-car">Select Car</label>
+                    <select id="auction-car" class="form-control" required>
+                        <option value="">Select a car</option>
+                        <!-- Cars will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="auction-start">Start Date & Time</label>
+                    <input type="datetime-local" id="auction-start" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="auction-end">End Date & Time</label>
+                    <input type="datetime-local" id="auction-end" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="auction-reserve">Reserve Price (R)</label>
+                    <input type="number" id="auction-reserve" class="form-control" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="auction-increment">Bid Increment (R)</label>
+                    <input type="number" id="auction-increment" class="form-control" min="100" value="1000" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <span id="create-auction-text">Create Auction</span>
+                        <span id="create-auction-loading" class="hidden">Creating...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase and Scripts - Fixed paths -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+</body>
+</html>
