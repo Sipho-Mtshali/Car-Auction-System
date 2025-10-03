@@ -5,80 +5,305 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CarAuction - Register</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/auth.css">
+    <!-- CSS path - goes up one directory from html/ to css/ -->
+    <link rel="stylesheet" href="../css/auth.css">
+    <style>
+        /* Additional inline styles to ensure visibility */
+        .password-strength {
+            margin-top: 5px;
+            font-size: 0.85rem;
+        }
+        .strength-weak { color: #ef476f; }
+        .strength-medium { color: #ffd166; }
+        .strength-strong { color: #06d6a0; }
+        
+        .error-message {
+            color: #ef476f;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+    </style>
 </head>
 <body>
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <h1>Create an Account</h1>
+                <h1><i class="fas fa-user-plus"></i> Create an Account</h1>
                 <p>Join CarAuction as a Buyer</p>
             </div>
-            <form id="register-form">
+            <form id="register-form" novalidate>
                 <div class="form-group">
-                    <label for="register-name">Full Name</label>
-                    <input type="text" id="register-name" class="form-control" placeholder="Enter your full name" required>
+                    <label for="register-name">
+                        <i class="fas fa-user"></i> Full Name
+                    </label>
+                    <input 
+                        type="text" 
+                        id="register-name" 
+                        class="form-control" 
+                        placeholder="Enter your full name" 
+                        required
+                        minlength="3">
+                    <div class="error-message" id="name-error">Please enter your full name (min. 3 characters)</div>
                 </div>
+
                 <div class="form-group">
-                    <label for="register-email">Email Address</label>
-                    <input type="email" id="register-email" class="form-control" placeholder="Enter your email" required>
+                    <label for="register-email">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input 
+                        type="email" 
+                        id="register-email" 
+                        class="form-control" 
+                        placeholder="Enter your email" 
+                        required>
+                    <div class="error-message" id="email-error">Please enter a valid email address</div>
                 </div>
+
                 <div class="form-group">
-                    <label for="register-password">Password</label>
-                    <input type="password" id="register-password" class="form-control" placeholder="Create a password" required minlength="6">
+                    <label for="register-password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="register-password" 
+                        class="form-control" 
+                        placeholder="Create a password (min. 6 characters)" 
+                        required 
+                        minlength="6">
+                    <div class="password-strength" id="password-strength"></div>
+                    <div class="error-message" id="password-error">Password must be at least 6 characters</div>
                 </div>
+
                 <div class="form-group">
-                    <label for="register-phone">Phone Number</label>
-                    <input type="tel" id="register-phone" class="form-control" placeholder="Enter your phone number" required>
+                    <label for="register-confirm-password">
+                        <i class="fas fa-lock"></i> Confirm Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="register-confirm-password" 
+                        class="form-control" 
+                        placeholder="Confirm your password" 
+                        required 
+                        minlength="6">
+                    <div class="error-message" id="confirm-password-error">Passwords do not match</div>
                 </div>
+
                 <div class="form-group">
-                    <label for="register-address">Address</label>
-                    <textarea id="register-address" class="form-control" rows="3" placeholder="Enter your address" required></textarea>
+                    <label for="register-phone">
+                        <i class="fas fa-phone"></i> Phone Number
+                    </label>
+                    <input 
+                        type="tel" 
+                        id="register-phone" 
+                        class="form-control" 
+                        placeholder="Enter your phone number (e.g., 0812345678)" 
+                        required
+                        pattern="[0-9]{10}">
+                    <div class="error-message" id="phone-error">Please enter a valid 10-digit phone number</div>
                 </div>
+
                 <div class="form-group">
-                    <label for="register-photo">Profile Photo (Optional)</label>
-                    <input type="file" id="register-photo" class="form-control" accept="image/*">
+                    <label for="register-address">
+                        <i class="fas fa-map-marker-alt"></i> Address
+                    </label>
+                    <textarea 
+                        id="register-address" 
+                        class="form-control" 
+                        rows="3" 
+                        placeholder="Enter your address" 
+                        required
+                        minlength="10"></textarea>
+                    <div class="error-message" id="address-error">Please enter your full address (min. 10 characters)</div>
                 </div>
+
+                <div class="form-group">
+                    <label for="register-photo">
+                        <i class="fas fa-camera"></i> Profile Photo (Optional)
+                    </label>
+                    <input 
+                        type="file" 
+                        id="register-photo" 
+                        class="form-control" 
+                        accept="image/jpeg,image/jpg,image/png,image/gif">
+                    <small style="color: var(--gray); font-size: 0.8rem;">Accepted formats: JPG, PNG, GIF (Max 5MB)</small>
+                </div>
+
                 <div class="form-options">
                     <div class="checkbox">
                         <input type="checkbox" id="terms-agreement" required>
-                        <label for="terms-agreement">I agree to the Terms & Conditions</label>
+                        <label for="terms-agreement">
+                            I agree to the <a href="#" style="text-decoration: underline;">Terms & Conditions</a>
+                        </label>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    <span id="register-text">Create Account</span>
-                    <span id="register-loading" class="hidden">Creating Account...</span>
+                <div class="error-message" id="terms-error">You must agree to the terms and conditions</div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                    <span id="register-text"><i class="fas fa-user-check"></i> Create Account</span>
+                    <span id="register-loading" class="hidden"><i class="fas fa-spinner fa-spin"></i> Creating Account...</span>
                 </button>
             </form>
             <div class="auth-footer">
                 <p>Already have an account? <a href="login.html">Login</a></p>
-                <p class="mt-20">Created By: Nkululeko Mthimunye | ©2025 | All Rights Reserved.</p>
+                <p class="mt-20">Created By: Sipho Mtshali | ©2024 | All Rights Reserved.</p>
             </div>
         </div>
     </div>
 
+    <!-- Firebase Scripts - load in correct order -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/auth.js"></script>
+    
+    <!-- Load Firebase config first -->
+    <script src="../js/firebase-config.js"></script>
+    
+    <!-- Registration script -->
     <script>
-        document.getElementById('register-form').addEventListener('submit', function(e) {
-            e.preventDefault();
+        // Wait for Firebase to initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Register page loaded');
             
-            const userData = {
-                name: document.getElementById('register-name').value,
-                email: document.getElementById('register-email').value,
-                password: document.getElementById('register-password').value,
-                phone: document.getElementById('register-phone').value,
-                address: document.getElementById('register-address').value,
-                photo: document.getElementById('register-photo').files[0],
-                role: 'buyer' // Default role for registration
-            };
+            // Password strength checker
+            const passwordInput = document.getElementById('register-password');
+            const passwordStrength = document.getElementById('password-strength');
             
-            registerUser(userData);
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                let strength = '';
+                let strengthClass = '';
+                
+                if (password.length === 0) {
+                    strength = '';
+                } else if (password.length < 6) {
+                    strength = 'Too short';
+                    strengthClass = 'strength-weak';
+                } else if (password.length < 8) {
+                    strength = 'Weak';
+                    strengthClass = 'strength-weak';
+                } else if (password.length < 12 && /[a-z]/.test(password) && /[0-9]/.test(password)) {
+                    strength = 'Medium';
+                    strengthClass = 'strength-medium';
+                } else if (/[a-z]/.test(password) && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
+                    strength = 'Strong';
+                    strengthClass = 'strength-strong';
+                } else {
+                    strength = 'Medium';
+                    strengthClass = 'strength-medium';
+                }
+                
+                passwordStrength.textContent = strength ? `Password strength: ${strength}` : '';
+                passwordStrength.className = `password-strength ${strengthClass}`;
+            });
+            
+            // Confirm password validation
+            const confirmPasswordInput = document.getElementById('register-confirm-password');
+            const confirmPasswordError = document.getElementById('confirm-password-error');
+            
+            confirmPasswordInput.addEventListener('blur', function() {
+                if (this.value && this.value !== passwordInput.value) {
+                    confirmPasswordError.classList.add('show');
+                } else {
+                    confirmPasswordError.classList.remove('show');
+                }
+            });
+            
+            // Form validation and submission
+            const registerForm = document.getElementById('register-form');
+            
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Clear all error messages
+                document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
+                
+                // Get form values
+                const name = document.getElementById('register-name').value.trim();
+                const email = document.getElementById('register-email').value.trim();
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm-password').value;
+                const phone = document.getElementById('register-phone').value.trim();
+                const address = document.getElementById('register-address').value.trim();
+                const photo = document.getElementById('register-photo').files[0];
+                const termsAgreed = document.getElementById('terms-agreement').checked;
+                
+                // Validation
+                let isValid = true;
+                
+                if (name.length < 3) {
+                    document.getElementById('name-error').classList.add('show');
+                    isValid = false;
+                }
+                
+                if (!email || !email.includes('@')) {
+                    document.getElementById('email-error').classList.add('show');
+                    isValid = false;
+                }
+                
+                if (password.length < 6) {
+                    document.getElementById('password-error').classList.add('show');
+                    isValid = false;
+                }
+                
+                if (password !== confirmPassword) {
+                    document.getElementById('confirm-password-error').classList.add('show');
+                    isValid = false;
+                }
+                
+                if (phone.length !== 10 || !/^[0-9]+$/.test(phone)) {
+                    document.getElementById('phone-error').classList.add('show');
+                    isValid = false;
+                }
+                
+                if (address.length < 10) {
+                    document.getElementById('address-error').classList.add('show');
+                    isValid = false;
+                }
+                
+                if (!termsAgreed) {
+                    document.getElementById('terms-error').classList.add('show');
+                    isValid = false;
+                }
+                
+                // Validate photo size if provided
+                if (photo && photo.size > 5 * 1024 * 1024) {
+                    alert('Profile photo must be less than 5MB');
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    return;
+                }
+                
+                // Prepare user data
+                const userData = {
+                    name: name,
+                    email: email,
+                    password: password,
+                    phone: phone,
+                    address: address,
+                    photo: photo,
+                    role: 'buyer' // Fixed - only buyers can register
+                };
+                
+                // Call registerUser function from auth.js
+                if (typeof registerUser === 'function') {
+                    await registerUser(userData);
+                } else {
+                    console.error('registerUser function not found');
+                    alert('Registration system error. Please refresh the page and try again.');
+                }
+            });
         });
     </script>
+    
+    <!-- Load auth.js last to ensure registerUser function is available -->
+    <script src="../js/auth.js"></script>
 </body>
 </html>
