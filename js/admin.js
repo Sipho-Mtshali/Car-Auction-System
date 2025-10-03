@@ -328,6 +328,51 @@ function setupEventListeners() {
     if (createAuctionForm) {
         createAuctionForm.addEventListener('submit', handleCreateAuction);
     }
+
+    // Add Car Form Handler
+    const addCarForm = document.getElementById('add-car-form');
+    if (addCarForm) {
+        addCarForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const carData = {
+                brand: document.getElementById('admin-car-brand').value,
+                model: document.getElementById('admin-car-model').value,
+                year: parseInt(document.getElementById('admin-car-year').value),
+                price: parseFloat(document.getElementById('admin-car-price').value),
+                mileage: parseFloat(document.getElementById('admin-car-mileage').value),
+                condition: document.getElementById('admin-car-condition').value,
+                color: document.getElementById('admin-car-color').value,
+                transmission: document.getElementById('admin-car-transmission').value,
+                description: document.getElementById('admin-car-description').value
+            };
+            
+            const images = document.getElementById('admin-car-images').files;
+            
+            try {
+                // Upload images if any
+                const imageUrls = [];
+                for (let i = 0; i < Math.min(images.length, 5); i++) {
+                    const image = images[i];
+                    const imageRef = storage.ref(`car-images/${currentUser.uid}/${Date.now()}_${image.name}`);
+                    const uploadTask = await imageRef.put(image);
+                    const imageUrl = await uploadTask.ref.getDownloadURL();
+                    imageUrls.push(imageUrl);
+                }
+                
+                if (imageUrls.length > 0) {
+                    carData.images = imageUrls;
+                }
+                
+                await adminAddCar(carData);
+                document.getElementById('add-car-modal').style.display = 'none';
+                loadPendingCars(); // Refresh the cars list
+            } catch (error) {
+                console.error('Error in add car form:', error);
+                showNotification('Error adding car: ' + error.message, 'error');
+            }
+        });
+    }
     
     const saveGeneralSettings = document.getElementById('save-general-settings');
     if (saveGeneralSettings) {
@@ -929,6 +974,36 @@ async function rejectCar(carId) {
     }
 }
 
+// Admin Car Creation Function
+async function adminAddCar(carData) {
+    try {
+        const carDoc = await db.collection('cars').add({
+            ...carData,
+            status: 'approved', // Auto-approve admin-added cars
+            sellerId: currentUser.uid,
+            sellerName: currentUser.name,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showNotification('Car added successfully!', 'success');
+        return carDoc.id;
+    } catch (error) {
+        console.error('Error adding car:', error);
+        showNotification('Error adding car: ' + error.message, 'error');
+    }
+}
+
+// Show Add Car Modal
+function showAddCarModal() {
+    const modal = document.getElementById('add-car-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Reset form
+        document.getElementById('add-car-form').reset();
+    }
+}
+
 // User Management Functions
 async function deleteUser(userId) {
     if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
@@ -1081,143 +1156,6 @@ function showNotification(message, type = 'info') {
     console.log(`[${type.toUpperCase()}] ${message}`);
 }
 
-// Admin User Creation Utility (for initial setup)
-async function createAdminUser(email, password, name) {
-    try {
-        // Save current user state
-        const previousUser = auth.currentUser;
-        
-        // Create new admin user
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        
-        const adminData = {
-            name: name,
-            email: email,
-            role: 'admin',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await db.collection('users').doc(user.uid).set(adminData);
-        console.log('Admin user created successfully:', email);
-        
-        // Sign out the new admin and sign back in as previous user if exists
-        await auth.signOut();
-        
-        if (previousUser) {
-            console.log('Please sign back in with your admin credentials');
-        }
-        
-        return true;
-    } catch (error) {
-        console.error('Error creating admin:', error);
-        return false;
-    }
-}
-// Admin User Creation Utility
-async function createAdminUser(email, password, name) {
-    try {
-        console.log('Creating admin user:', email);
-        
-        // Create new admin user
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        
-        const adminData = {
-            name: name,
-            email: email,
-            role: 'admin',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'active'
-        };
-        
-        await db.collection('users').doc(user.uid).set(adminData);
-        console.log('Admin user created successfully:', email);
-        
-        showNotification(`Admin user "${name}" created successfully!`, 'success');
-        
-        return true;
-    } catch (error) {
-        console.error('Error creating admin:', error);
-        showNotification('Error creating admin: ' + error.message, 'error');
-        return false;
-    }
-}
-
-// Seller Creation Utility
-async function createSellerUser(email, password, name, phone = '', address = '') {
-    try {
-        console.log('Creating seller user:', email);
-        
-        // Create new seller user
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        
-        const sellerData = {
-            name: name,
-            email: email,
-            role: 'seller',
-            phone: phone,
-            address: address,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'active'
-        };
-        
-        await db.collection('users').doc(user.uid).set(sellerData);
-        console.log('Seller user created successfully:', email);
-        
-        showNotification(`Seller user "${name}" created successfully!`, 'success');
-        
-        return true;
-    } catch (error) {
-        console.error('Error creating seller:', error);
-        showNotification('Error creating seller: ' + error.message, 'error');
-        return false;
-    }
-}
-
-// Quick User Creation Panel (for admin dashboard)
-function showQuickUserCreation() {
-    const email = prompt('Enter email for new user:');
-    if (!email) return;
-    
-    const password = prompt('Enter temporary password:');
-    if (!password) return;
-    
-    const name = prompt('Enter full name:');
-    if (!name) return;
-    
-    const role = prompt('Enter role (admin/seller/buyer):', 'buyer');
-    if (!role) return;
-    
-    if (confirm(`Create ${role} user?\nName: ${name}\nEmail: ${email}`)) {
-        if (role === 'admin') {
-            createAdminUser(email, password, name);
-        } else if (role === 'seller') {
-            createSellerUser(email, password, name);
-        } else {
-            // For buyer, use the standard registration flow
-            alert('For buyer accounts, please use the public registration form.');
-        }
-    }
-}
-
-// Make functions globally accessible (add to existing window exports)
-window.createAdminUser = createAdminUser;
-window.createSellerUser = createSellerUser;
-window.showQuickUserCreation = showQuickUserCreation;
-
-console.log('Admin utilities loaded');
-console.log('Quick user creation: showQuickUserCreation()');
-console.log('Admin creation: createAdminUser("admin@example.com", "password123", "Admin Name")');
-console.log('Seller creation: createSellerUser("seller@example.com", "password123", "Seller Name")');
-
-// Expose createAdminUser to window for console access
-window.createAdminUser = createAdminUser;
-
 // Make functions globally accessible
 window.approveCar = approveCar;
 window.rejectCar = rejectCar;
@@ -1226,6 +1164,7 @@ window.editUser = editUser;
 window.viewCar = viewCar;
 window.viewAuction = viewAuction;
 window.toggleAuction = toggleAuction;
+window.adminAddCar = adminAddCar;
+window.showAddCarModal = showAddCarModal;
 
 console.log('Admin dashboard loaded successfully');
-console.log('To create an admin user, use: createAdminUser("email@example.com", "password", "Admin Name")');
