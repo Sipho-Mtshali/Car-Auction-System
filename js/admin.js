@@ -4,36 +4,42 @@ let revenueChart, usersChart, paymentChart;
 // Wait for Firebase and currentUser to be ready
 function waitForAuth() {
     return new Promise((resolve) => {
-        if (typeof auth === 'undefined') {
-            setTimeout(() => waitForAuth().then(resolve), 100);
-        } else {
-            const unsubscribe = auth.onAuthStateChanged((user) => {
-                unsubscribe();
-                resolve(user);
-            });
-        }
+        const checkAuth = () => {
+            if (authInitialized && currentUser) {
+                resolve(currentUser);
+            } else if (authInitialized && !currentUser) {
+                resolve(null);
+            } else {
+                setTimeout(checkAuth, 100);
+            }
+        };
+        checkAuth();
     });
 }
 
 // Initialize Admin Dashboard
 document.addEventListener('DOMContentLoaded', async function() {
     try {
-        // Wait for authentication
-        await waitForAuth();
+        console.log('Initializing admin dashboard...');
         
-        // Check if user is admin
-        if (!currentUser) {
+        // Wait for authentication to be fully initialized
+        const user = await waitForAuth();
+        
+        if (!user) {
             alert('Please login to access the admin panel.');
             window.location.href = '../html/login.html';
             return;
         }
         
-        if (currentUser.role !== 'admin') {
+        // Check if user is admin
+        if (user.role !== 'admin') {
             alert('Access denied. Admin privileges required.');
             window.location.href = '../html/user-dashboard.html';
             return;
         }
 
+        console.log('Admin user confirmed:', user.email);
+        
         // Initialize dashboard
         initializeCharts();
         setupEventListeners();
@@ -1109,6 +1115,105 @@ async function createAdminUser(email, password, name) {
         return false;
     }
 }
+// Admin User Creation Utility
+async function createAdminUser(email, password, name) {
+    try {
+        console.log('Creating admin user:', email);
+        
+        // Create new admin user
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        const adminData = {
+            name: name,
+            email: email,
+            role: 'admin',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'active'
+        };
+        
+        await db.collection('users').doc(user.uid).set(adminData);
+        console.log('Admin user created successfully:', email);
+        
+        showNotification(`Admin user "${name}" created successfully!`, 'success');
+        
+        return true;
+    } catch (error) {
+        console.error('Error creating admin:', error);
+        showNotification('Error creating admin: ' + error.message, 'error');
+        return false;
+    }
+}
+
+// Seller Creation Utility
+async function createSellerUser(email, password, name, phone = '', address = '') {
+    try {
+        console.log('Creating seller user:', email);
+        
+        // Create new seller user
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        const sellerData = {
+            name: name,
+            email: email,
+            role: 'seller',
+            phone: phone,
+            address: address,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'active'
+        };
+        
+        await db.collection('users').doc(user.uid).set(sellerData);
+        console.log('Seller user created successfully:', email);
+        
+        showNotification(`Seller user "${name}" created successfully!`, 'success');
+        
+        return true;
+    } catch (error) {
+        console.error('Error creating seller:', error);
+        showNotification('Error creating seller: ' + error.message, 'error');
+        return false;
+    }
+}
+
+// Quick User Creation Panel (for admin dashboard)
+function showQuickUserCreation() {
+    const email = prompt('Enter email for new user:');
+    if (!email) return;
+    
+    const password = prompt('Enter temporary password:');
+    if (!password) return;
+    
+    const name = prompt('Enter full name:');
+    if (!name) return;
+    
+    const role = prompt('Enter role (admin/seller/buyer):', 'buyer');
+    if (!role) return;
+    
+    if (confirm(`Create ${role} user?\nName: ${name}\nEmail: ${email}`)) {
+        if (role === 'admin') {
+            createAdminUser(email, password, name);
+        } else if (role === 'seller') {
+            createSellerUser(email, password, name);
+        } else {
+            // For buyer, use the standard registration flow
+            alert('For buyer accounts, please use the public registration form.');
+        }
+    }
+}
+
+// Make functions globally accessible (add to existing window exports)
+window.createAdminUser = createAdminUser;
+window.createSellerUser = createSellerUser;
+window.showQuickUserCreation = showQuickUserCreation;
+
+console.log('Admin utilities loaded');
+console.log('Quick user creation: showQuickUserCreation()');
+console.log('Admin creation: createAdminUser("admin@example.com", "password123", "Admin Name")');
+console.log('Seller creation: createSellerUser("seller@example.com", "password123", "Seller Name")');
 
 // Expose createAdminUser to window for console access
 window.createAdminUser = createAdminUser;

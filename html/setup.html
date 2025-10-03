@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarAuction - Setup</title>
+    <link rel="stylesheet" href="../css/auth.css">
+    <style>
+        .setup-container {
+            max-width: 500px;
+        }
+        .setup-card {
+            text-align: center;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .btn-group .btn {
+            flex: 1;
+        }
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .instructions h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container setup-container">
+        <div class="auth-card setup-card">
+            <div class="auth-header">
+                <h1><i class="fas fa-cogs"></i> System Setup</h1>
+                <p>Create Admin & Seller Accounts</p>
+            </div>
+            
+            <div class="instructions">
+                <h3>📋 Setup Instructions:</h3>
+                <p>1. First, create an Admin account</p>
+                <p>2. Then login to admin dashboard</p>
+                <p>3. Create Seller accounts as needed</p>
+                <p><strong>Note:</strong> Regular users can register publicly</p>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="createAdminAccount()">
+                    <i class="fas fa-user-shield"></i> Create Admin
+                </button>
+                <button class="btn btn-success" onclick="createSellerAccount()">
+                    <i class="fas fa-user-tie"></i> Create Seller
+                </button>
+            </div>
+            
+            <div class="auth-footer">
+                <p><a href="login.html">Back to Login</a></p>
+                <p class="mt-20">Created By: Sipho Mtshali | ©2024 | All Rights Reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    
+    <script>
+        async function createAdminAccount() {
+            const email = prompt('Enter admin email:');
+            if (!email) return;
+            
+            const password = prompt('Enter admin password:');
+            if (!password) return;
+            
+            const name = prompt('Enter admin name:');
+            if (!name) return;
+            
+            if (confirm(`Create Admin Account?\nName: ${name}\nEmail: ${email}`)) {
+                try {
+                    // Create user in Firebase Auth
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    
+                    // Create user document in Firestore
+                    await db.collection('users').doc(user.uid).set({
+                        name: name,
+                        email: email,
+                        role: 'admin',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        status: 'active'
+                    });
+                    
+                    alert(`✅ Admin account created successfully!\n\nName: ${name}\nEmail: ${email}\nPassword: ${password}\n\nYou can now login as admin.`);
+                    
+                    // Redirect to login
+                    window.location.href = 'login.html';
+                    
+                } catch (error) {
+                    console.error('Error creating admin:', error);
+                    alert('❌ Error creating admin: ' + error.message);
+                }
+            }
+        }
+        
+        async function createSellerAccount() {
+            const email = prompt('Enter seller email:');
+            if (!email) return;
+            
+            const password = prompt('Enter seller password:');
+            if (!password) return;
+            
+            const name = prompt('Enter seller name:');
+            if (!name) return;
+            
+            if (confirm(`Create Seller Account?\nName: ${name}\nEmail: ${email}`)) {
+                try {
+                    // Create user in Firebase Auth
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    
+                    // Create user document in Firestore
+                    await db.collection('users').doc(user.uid).set({
+                        name: name,
+                        email: email,
+                        role: 'seller',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        status: 'active'
+                    });
+                    
+                    alert(`✅ Seller account created successfully!\n\nName: ${name}\nEmail: ${email}\nPassword: ${password}\n\nSeller can now login.`);
+                    
+                } catch (error) {
+                    console.error('Error creating seller:', error);
+                    alert('❌ Error creating seller: ' + error.message);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

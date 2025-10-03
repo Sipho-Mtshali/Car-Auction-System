@@ -27,6 +27,23 @@
         .error-message.show {
             display: block;
         }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            margin: 10px 0;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -36,6 +53,12 @@
                 <h1><i class="fas fa-user-plus"></i> Create an Account</h1>
                 <p>Join CarAuction as a Buyer</p>
             </div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            
             <form id="register-form" novalidate>
                 <div class="form-group">
                     <label for="register-name">
@@ -143,7 +166,7 @@
                 </div>
                 <div class="error-message" id="terms-error">You must agree to the terms and conditions</div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;" id="register-btn">
                     <span id="register-text"><i class="fas fa-user-check"></i> Create Account</span>
                     <span id="register-loading" class="hidden"><i class="fas fa-spinner fa-spin"></i> Creating Account...</span>
                 </button>
@@ -166,6 +189,8 @@
     
     <!-- Registration script -->
     <script>
+        let isSubmitting = false;
+        
         // Wait for Firebase to initialize
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Register page loaded');
@@ -216,9 +241,21 @@
             
             // Form validation and submission
             const registerForm = document.getElementById('register-form');
+            const registerBtn = document.getElementById('register-btn');
+            const progressBar = document.getElementById('progress-bar');
+            const progressFill = document.getElementById('progress-fill');
+            
+            function updateProgress(percent) {
+                progressFill.style.width = percent + '%';
+            }
             
             registerForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
+                
+                if (isSubmitting) {
+                    alert('Registration already in progress. Please wait...');
+                    return;
+                }
                 
                 // Clear all error messages
                 document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
@@ -281,6 +318,13 @@
                     return;
                 }
                 
+                isSubmitting = true;
+                registerBtn.disabled = true;
+                progressBar.style.display = 'block';
+                
+                // Show progress
+                updateProgress(20);
+                
                 // Prepare user data
                 const userData = {
                     name: name,
@@ -288,16 +332,29 @@
                     password: password,
                     phone: phone,
                     address: address,
-                    photo: photo,
-                    role: 'buyer' // Fixed - only buyers can register
+                    photo: photo
                 };
                 
-                // Call registerUser function from auth.js
-                if (typeof registerUser === 'function') {
-                    await registerUser(userData);
-                } else {
-                    console.error('registerUser function not found');
-                    alert('Registration system error. Please refresh the page and try again.');
+                try {
+                    // Call registerUser function from auth.js
+                    if (typeof registerUser === 'function') {
+                        // Simulate progress updates
+                        setTimeout(() => updateProgress(40), 500);
+                        setTimeout(() => updateProgress(60), 1000);
+                        setTimeout(() => updateProgress(80), 1500);
+                        
+                        await registerUser(userData);
+                        updateProgress(100);
+                    } else {
+                        throw new Error('Registration system not available');
+                    }
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    // Reset UI on error
+                    isSubmitting = false;
+                    registerBtn.disabled = false;
+                    progressBar.style.display = 'none';
+                    updateProgress(0);
                 }
             });
         });

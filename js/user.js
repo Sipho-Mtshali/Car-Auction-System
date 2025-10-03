@@ -5,34 +5,40 @@ let userFavorites = [];
 // Wait for Firebase and currentUser to be ready
 function waitForAuth() {
     return new Promise((resolve) => {
-        if (typeof auth === 'undefined') {
-            setTimeout(() => waitForAuth().then(resolve), 100);
-        } else {
-            const unsubscribe = auth.onAuthStateChanged((user) => {
-                unsubscribe();
-                resolve(user);
-            });
-        }
+        const checkAuth = () => {
+            if (authInitialized && currentUser) {
+                resolve(currentUser);
+            } else if (authInitialized && !currentUser) {
+                resolve(null);
+            } else {
+                setTimeout(checkAuth, 100);
+            }
+        };
+        checkAuth();
     });
 }
 
 // Initialize User Dashboard
 document.addEventListener('DOMContentLoaded', async function() {
     try {
-        await waitForAuth();
+        console.log('Initializing user dashboard...');
         
-        if (!currentUser) {
+        const user = await waitForAuth();
+        
+        if (!user) {
             alert('Please login to access your dashboard.');
             window.location.href = '../html/login.html';
             return;
         }
         
         // Check if user is admin - redirect to admin panel
-        if (currentUser.role === 'admin') {
+        if (user.role === 'admin') {
             window.location.href = 'admin-dashboard.html';
             return;
         }
 
+        console.log('User confirmed:', user.email, 'Role:', user.role);
+        
         // Initialize dashboard based on role
         setupDashboardByRole();
         setupEventListeners();

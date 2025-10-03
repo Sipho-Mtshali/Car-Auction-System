@@ -1,10 +1,13 @@
 // Authentication state management
 let currentUser = null;
+let authInitialized = false;
 
 // Check authentication state
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         try {
+            console.log('Auth state changed - User found:', user.uid);
+            
             // Get user data from Firestore
             const userDoc = await db.collection('users').doc(user.uid).get();
             
@@ -15,22 +18,37 @@ auth.onAuthStateChanged(async (user) => {
                     ...userDoc.data()
                 };
                 
+                authInitialized = true;
+                
                 // Update UI with user info
                 updateUserUI();
                 
                 console.log('User authenticated:', currentUser.email, 'Role:', currentUser.role);
+                
+                // Handle redirects only if we're on login/register pages
+                const currentPath = window.location.pathname;
+                if (currentPath.includes('login.html') || currentPath.includes('register.html')) {
+                    redirectBasedOnRole(currentUser.role);
+                }
+                
             } else {
                 console.error('User document not found');
-                handleAuthError();
+                await auth.signOut();
+                window.location.href = '../html/login.html';
             }
         } catch (error) {
             console.error('Error fetching user data:', error);
-            handleAuthError();
+            await auth.signOut();
+            window.location.href = '../html/login.html';
         }
     } else {
-        // No user signed in - redirect to login only if on protected pages
+        console.log('No user signed in');
+        currentUser = null;
+        authInitialized = true;
+        
+        // Only redirect if we're on a protected page
         const currentPath = window.location.pathname;
-        const publicPages = ['login.html', 'register.html', 'index.html'];
+        const publicPages = ['login.html', 'register.html', 'index.html', 'setup.html'];
         const isPublicPage = publicPages.some(page => currentPath.includes(page));
         
         if (!isPublicPage) {
@@ -39,6 +57,22 @@ auth.onAuthStateChanged(async (user) => {
         }
     }
 });
+
+// Helper function for role-based redirects
+function redirectBasedOnRole(role) {
+    switch(role) {
+        case 'admin':
+            window.location.href = 'admin-dashboard.html';
+            break;
+        case 'seller':
+        case 'buyer':
+            window.location.href = 'user-dashboard.html';
+            break;
+        default:
+            console.error('Unknown role:', role);
+            window.location.href = 'login.html';
+    }
+}
 
 // Update user UI
 function updateUserUI() {
@@ -104,16 +138,10 @@ async function loginUser(email, password) {
         // Show success message
         alert('Login successful! Welcome back, ' + (userData.name || 'User') + '!');
         
-        // Redirect based on role
-        if (userData.role === 'admin') {
-            console.log('Redirecting to admin dashboard...');
-            window.location.href = 'admin-dashboard.html';
-        } else if (userData.role === 'seller' || userData.role === 'buyer') {
-            console.log('Redirecting to user dashboard...');
-            window.location.href = 'user-dashboard.html';
-        } else {
-            throw new Error('Invalid user role: ' + userData.role);
-        }
+        // Wait a moment for auth state to update, then redirect
+        setTimeout(() => {
+            redirectBasedOnRole(userData.role);
+        }, 500);
         
     } catch (error) {
         console.error('Login error:', error);
@@ -153,43 +181,36 @@ async function loginUser(email, password) {
     }
 }
 
-// Register User Function
+// Register User Function - OPTIMIZED VERSION
 async function registerUser(userData) {
     const registerText = document.getElementById('register-text');
     const registerLoading = document.getElementById('register-loading');
     const registerBtn = document.querySelector('#register-form button[type="submit"]');
     
     try {
-        console.log('Starting registration for:', userData.email);
+        console.log('Starting registration process...');
         
-        // Update button state
+        // Update button state immediately
         registerBtn.disabled = true;
         if (registerText) registerText.classList.add('hidden');
         if (registerLoading) registerLoading.classList.remove('hidden');
         
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(userData.email)) {
-            throw new Error('Please enter a valid email address.');
-        }
-        
-        // Validate password strength
-        if (userData.password.length < 6) {
-            throw new Error('Password must be at least 6 characters long.');
-        }
-        
-        // Create user in Firebase Auth
+        // STEP 1: Create auth account (with timeout)
         console.log('Creating Firebase auth account...');
-        const userCredential = await auth.createUserWithEmailAndPassword(userData.email, userData.password);
-        const user = userCredential.user;
+        const authPromise = auth.createUserWithEmailAndPassword(userData.email, userData.password);
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Auth timeout - please try again')), 15000)
+        );
         
+        const userCredential = await Promise.race([authPromise, timeoutPromise]);
+        const user = userCredential.user;
         console.log('Firebase auth account created:', user.uid);
         
-        // Prepare user data for Firestore
+        // STEP 2: Prepare user data
         const firestoreData = {
             name: userData.name,
             email: userData.email,
-            role: 'buyer', // Fixed - only buyers can register through public registration
+            role: 'buyer',
             phone: userData.phone,
             address: userData.address,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -198,82 +219,88 @@ async function registerUser(userData) {
             photoURL: null
         };
         
-        console.log('Uploading profile data to Firestore...');
-        
-        // Handle profile photo upload if provided
+        // STEP 3: Handle photo upload separately (non-blocking)
+        let photoUploadPromise = Promise.resolve(null);
         if (userData.photo) {
-            try {
-                console.log('Uploading profile photo...');
-                const photoRef = storage.ref(`profile-photos/${user.uid}/${Date.now()}_${userData.photo.name}`);
-                const uploadTask = await photoRef.put(userData.photo);
-                const photoURL = await uploadTask.ref.getDownloadURL();
-                firestoreData.photoURL = photoURL;
-                console.log('Photo uploaded successfully:', photoURL);
-            } catch (photoError) {
-                console.error('Error uploading photo:', photoError);
-                // Continue registration even if photo upload fails
-                console.log('Continuing registration without photo...');
-            }
+            photoUploadPromise = (async () => {
+                try {
+                    console.log('Starting photo upload...');
+                    const photoRef = storage.ref(`profile-photos/${user.uid}/${Date.now()}_${userData.photo.name}`);
+                    const uploadTask = await photoRef.put(userData.photo);
+                    const photoURL = await uploadTask.ref.getDownloadURL();
+                    console.log('Photo uploaded successfully');
+                    return photoURL;
+                } catch (photoError) {
+                    console.warn('Photo upload failed, continuing without photo:', photoError);
+                    return null;
+                }
+            })();
         }
         
-        // Create user document in Firestore
+        // STEP 4: Create user document immediately
+        console.log('Creating user document in Firestore...');
         await db.collection('users').doc(user.uid).set(firestoreData);
+        console.log('User document created successfully');
         
-        console.log('User profile created successfully in Firestore');
+        // STEP 5: Wait for photo upload (if any)
+        const photoURL = await photoUploadPromise;
+        if (photoURL) {
+            await db.collection('users').doc(user.uid).update({
+                photoURL: photoURL,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
         
-        // Update Firebase Auth display name
+        // STEP 6: Update auth profile (non-critical)
         try {
             await user.updateProfile({
                 displayName: userData.name
             });
-            console.log('Firebase Auth profile updated');
+            console.log('Auth profile updated');
         } catch (profileError) {
-            console.error('Error updating auth profile:', profileError);
-            // Non-critical error, continue
+            console.warn('Auth profile update failed:', profileError);
         }
         
-        // Show success message
-        alert(`🎉 Welcome to CarAuction, ${userData.name}!\n\nYour account has been created successfully. You can now start browsing and bidding on cars!`);
+        // SUCCESS
+        console.log('Registration completed successfully');
+        alert(`🎉 Welcome to CarAuction, ${userData.name}!\\n\\nYour account has been created successfully!`);
         
-        // Redirect to user dashboard
-        console.log('Redirecting to user dashboard...');
+        // Redirect immediately
         window.location.href = 'user-dashboard.html';
         
     } catch (error) {
         console.error('Registration error:', error);
-        let errorMessage = 'Registration failed. Please try again.';
+        
+        // Clean up on failure
+        if (auth.currentUser) {
+            try {
+                await auth.currentUser.delete();
+                console.log('Cleaned up failed registration');
+            } catch (deleteError) {
+                console.error('Cleanup error:', deleteError);
+            }
+        }
+        
+        let errorMessage = 'Registration failed. ';
         
         switch (error.code) {
             case 'auth/email-already-in-use':
-                errorMessage = 'This email is already registered. Please login instead or use a different email.';
+                errorMessage += 'This email is already registered. Please login instead.';
                 break;
             case 'auth/weak-password':
-                errorMessage = 'Password is too weak. Please use at least 6 characters with a mix of letters and numbers.';
-                break;
-            case 'auth/invalid-email':
-                errorMessage = 'Invalid email format. Please check your email address.';
-                break;
-            case 'auth/operation-not-allowed':
-                errorMessage = 'Registration is currently disabled. Please contact support.';
+                errorMessage += 'Password is too weak. Use at least 6 characters.';
                 break;
             case 'auth/network-request-failed':
-                errorMessage = 'Network error. Please check your internet connection and try again.';
+                errorMessage += 'Network error. Check your internet connection.';
+                break;
+            case 'auth/operation-not-allowed':
+                errorMessage += 'Registration is currently disabled.';
                 break;
             default:
-                if (error.message) {
-                    errorMessage = error.message;
-                }
+                errorMessage += error.message || 'Please try again.';
         }
         
-        alert('❌ Registration Failed\n\n' + errorMessage);
-        
-        // If user was created in auth but Firestore failed, clean up
-        if (auth.currentUser && error.code !== 'auth/email-already-in-use') {
-            console.log('Cleaning up failed registration...');
-            auth.currentUser.delete().catch(deleteError => {
-                console.error('Error cleaning up auth user:', deleteError);
-            });
-        }
+        alert('❌ ' + errorMessage);
         
         // Reset button state
         registerBtn.disabled = false;
@@ -312,7 +339,7 @@ if (forgotPasswordLink) {
         if (email) {
             try {
                 await auth.sendPasswordResetEmail(email);
-                alert('✅ Password reset email sent!\n\nPlease check your inbox and follow the instructions to reset your password.');
+                alert('✅ Password reset email sent!\\n\\nPlease check your inbox and follow the instructions to reset your password.');
             } catch (error) {
                 console.error('Password reset error:', error);
                 let errorMessage = 'Failed to send password reset email.';
@@ -335,11 +362,79 @@ if (forgotPasswordLink) {
     });
 }
 
+// Admin User Creation Utility (for initial setup)
+async function createAdminUser(email, password, name) {
+    try {
+        console.log('Creating admin user:', email);
+        
+        // Create new admin user
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        const adminData = {
+            name: name,
+            email: email,
+            role: 'admin',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'active'
+        };
+        
+        await db.collection('users').doc(user.uid).set(adminData);
+        console.log('Admin user created successfully:', email);
+        
+        alert(`✅ Admin user "${name}" created successfully!\\nEmail: ${email}\\nPassword: ${password}`);
+        
+        return true;
+    } catch (error) {
+        console.error('Error creating admin:', error);
+        alert('❌ Error creating admin: ' + error.message);
+        return false;
+    }
+}
+
+// Seller Creation Utility
+async function createSellerUser(email, password, name, phone = '', address = '') {
+    try {
+        console.log('Creating seller user:', email);
+        
+        // Create new seller user
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        const sellerData = {
+            name: name,
+            email: email,
+            role: 'seller',
+            phone: phone,
+            address: address,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'active'
+        };
+        
+        await db.collection('users').doc(user.uid).set(sellerData);
+        console.log('Seller user created successfully:', email);
+        
+        alert(`✅ Seller user "${name}" created successfully!\\nEmail: ${email}\\nPassword: ${password}`);
+        
+        return true;
+    } catch (error) {
+        console.error('Error creating seller:', error);
+        alert('❌ Error creating seller: ' + error.message);
+        return false;
+    }
+}
+
 // Make functions globally accessible
 window.loginUser = loginUser;
 window.registerUser = registerUser;
+window.createAdminUser = createAdminUser;
+window.createSellerUser = createSellerUser;
 
 console.log('✅ Authentication module loaded successfully');
 console.log('Firebase Auth:', typeof auth !== 'undefined' ? 'Connected' : 'Not connected');
 console.log('Firestore:', typeof db !== 'undefined' ? 'Connected' : 'Not connected');
 console.log('Storage:', typeof storage !== 'undefined' ? 'Connected' : 'Not connected');
+console.log('Admin creation: createAdminUser("admin@example.com", "password123", "Admin Name")');
+console.log('Seller creation: createSellerUser("seller@example.com", "password123", "Seller Name")');
