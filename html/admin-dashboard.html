@@ -186,43 +186,42 @@
                     </div>
                 </div>
 
-                <!-- User Management Content -->
-                <div id="users-content" class="hidden">
-                    <div class="top-bar">
-                        <h2>User Management</h2>
-                        <button class="btn btn-primary" id="add-user-btn">
-                            <i class="fas fa-plus"></i> Add New User
-                        </button>
-                    </div>
-                    
-                    <div class="tabs">
-                        <div class="tab active" data-tab="all-users">All Users</div>
-                        <div class="tab" data-tab="sellers">Sellers</div>
-                        <div class="tab" data-tab="buyers">Buyers</div>
-                        <div class="tab" data-tab="admins">Admins</div>
-                    </div>
-                    
-                    <div class="tab-content active" id="all-users-tab">
-                        <div class="table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>User ID</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Join Date</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="users-table-body">
-                                    <!-- Users will be loaded dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+<!-- User Management Content - REPLACE YOUR EXISTING USER MANAGEMENT SECTION -->
+<div id="users-content" class="hidden">
+    <div class="top-bar">
+        <h2>User Management</h2>
+        <button class="btn btn-primary" id="add-user-btn">
+            <i class="fas fa-plus"></i> Add New User
+        </button>
+    </div>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="all-users">All Users</div>
+        <div class="tab" data-tab="sellers">Sellers</div>
+        <div class="tab" data-tab="buyers">Buyers</div>
+        <div class="tab" data-tab="admins">Admins</div>
+    </div>
+    
+    <!-- Single table for all user types - we just filter the data -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Join Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="users-table-body">
+                <!-- Users will be loaded dynamically -->
+            </tbody>
+        </table>
+    </div>
+</div>
 
                 <!-- Car Approvals Content -->
                 <div id="cars-content" class="hidden">

@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         console.log('Initializing admin dashboard...');
         
-        // Wait for authentication to be fully initialized
         const user = await waitForAuth();
         
         if (!user) {
@@ -31,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
         
-        // Check if user is admin
         if (user.role !== 'admin') {
             alert('Access denied. Admin privileges required.');
             window.location.href = '../html/user-dashboard.html';
@@ -40,7 +38,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         console.log('Admin user confirmed:', user.email);
         
-        // Initialize dashboard
         initializeCharts();
         setupEventListeners();
         loadDashboardData();
@@ -54,9 +51,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
-// Initialize Charts with proper configuration
+// Initialize Charts
 function initializeCharts() {
-    // Common chart options for dark theme
     const commonOptions = {
         responsive: true,
         maintainAspectRatio: true,
@@ -69,7 +65,6 @@ function initializeCharts() {
         }
     };
 
-    // Revenue Chart
     const revenueCtx = document.getElementById('revenueChart');
     if (revenueCtx) {
         revenueChart = new Chart(revenueCtx.getContext('2d'), {
@@ -88,17 +83,11 @@ function initializeCharts() {
             },
             options: {
                 ...commonOptions,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
                         ticks: {
                             color: '#f8f9fa',
                             callback: function(value) {
@@ -107,19 +96,14 @@ function initializeCharts() {
                         }
                     },
                     x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#f8f9fa'
-                        }
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#f8f9fa' }
                     }
                 }
             }
         });
     }
 
-    // Users Chart
     const usersCtx = document.getElementById('usersChart');
     if (usersCtx) {
         usersChart = new Chart(usersCtx.getContext('2d'), {
@@ -136,35 +120,22 @@ function initializeCharts() {
             },
             options: {
                 ...commonOptions,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#f8f9fa'
-                        }
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#f8f9fa' }
                     },
                     x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#f8f9fa'
-                        }
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#f8f9fa' }
                     }
                 }
             }
         });
     }
 
-    // Payment Method Chart
     const paymentCtx = document.getElementById('paymentChart');
     if (paymentCtx) {
         paymentChart = new Chart(paymentCtx.getContext('2d'), {
@@ -173,12 +144,7 @@ function initializeCharts() {
                 labels: ['Credit Card', 'EFT', 'Cash', 'Mobile Payment'],
                 datasets: [{
                     data: [45, 30, 15, 10],
-                    backgroundColor: [
-                        '#3a86ff',
-                        '#06d6a0',
-                        '#ffd166',
-                        '#8338ec'
-                    ],
+                    backgroundColor: ['#3a86ff', '#06d6a0', '#ffd166', '#8338ec'],
                     borderWidth: 0
                 }]
             },
@@ -187,9 +153,7 @@ function initializeCharts() {
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: {
-                            color: '#f8f9fa'
-                        }
+                        labels: { color: '#f8f9fa' }
                     }
                 }
             }
@@ -199,7 +163,6 @@ function initializeCharts() {
 
 // Setup Event Listeners
 function setupEventListeners() {
-    // Mobile menu toggle
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
@@ -211,7 +174,6 @@ function setupEventListeners() {
         });
     }
 
-    // Close sidebar when clicking on overlay
     if (overlay) {
         overlay.addEventListener('click', function() {
             sidebar.classList.remove('active');
@@ -219,7 +181,6 @@ function setupEventListeners() {
         });
     }
 
-    // Navigation
     const navLinks = document.querySelectorAll('.nav-links a:not(#logout-btn)');
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
@@ -228,11 +189,9 @@ function setupEventListeners() {
             
             if (!page) return;
             
-            // Update active link
             navLinks.forEach(l => l.classList.remove('active'));
             this.classList.add('active');
             
-            // Show corresponding content
             const pageContents = document.querySelectorAll('[id$="-content"]');
             pageContents.forEach(content => content.classList.add('hidden'));
             
@@ -241,30 +200,23 @@ function setupEventListeners() {
                 targetContent.classList.remove('hidden');
             }
             
-            // Close mobile menu
             sidebar.classList.remove('active');
             overlay.classList.remove('active');
             
-            // Load content based on page
             loadPageContent(page);
         });
     });
 
-    // Tabs
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach(tab => {
         tab.addEventListener('click', function() {
             const tabId = this.getAttribute('data-tab');
-            
-            // Get parent container to scope tab switching
             const tabContainer = this.closest('.tabs');
             const parentContent = tabContainer.nextElementSibling.parentElement;
             
-            // Update active tab
             tabContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
             
-            // Show corresponding tab content
             parentContent.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
@@ -274,12 +226,10 @@ function setupEventListeners() {
                 targetTab.classList.add('active');
             }
             
-            // Load tab-specific data
             loadTabContent(tabId);
         });
     });
 
-    // Modals
     const addUserBtn = document.getElementById('add-user-btn');
     const addUserModal = document.getElementById('add-user-modal');
     const createAuctionBtn = document.getElementById('create-auction-btn');
@@ -298,7 +248,6 @@ function setupEventListeners() {
         });
     }
 
-    // Close Modals
     const closeModals = document.querySelectorAll('.close-modal');
     closeModals.forEach(btn => {
         btn.addEventListener('click', function() {
@@ -306,7 +255,6 @@ function setupEventListeners() {
         });
     });
 
-    // Quick Stats Refresh
     const quickStatsBtn = document.getElementById('quick-stats-btn');
     if (quickStatsBtn) {
         quickStatsBtn.addEventListener('click', function() {
@@ -318,7 +266,6 @@ function setupEventListeners() {
         });
     }
 
-    // Form submissions
     const addUserForm = document.getElementById('add-user-form');
     if (addUserForm) {
         addUserForm.addEventListener('submit', handleAddUser);
@@ -329,7 +276,6 @@ function setupEventListeners() {
         createAuctionForm.addEventListener('submit', handleCreateAuction);
     }
 
-    // Add Car Form Handler
     const addCarForm = document.getElementById('add-car-form');
     if (addCarForm) {
         addCarForm.addEventListener('submit', async (e) => {
@@ -350,7 +296,6 @@ function setupEventListeners() {
             const images = document.getElementById('admin-car-images').files;
             
             try {
-                // Upload images if any
                 const imageUrls = [];
                 for (let i = 0; i < Math.min(images.length, 5); i++) {
                     const image = images[i];
@@ -366,7 +311,7 @@ function setupEventListeners() {
                 
                 await adminAddCar(carData);
                 document.getElementById('add-car-modal').style.display = 'none';
-                loadPendingCars(); // Refresh the cars list
+                loadPendingCars();
             } catch (error) {
                 console.error('Error in add car form:', error);
                 showNotification('Error adding car: ' + error.message, 'error');
@@ -384,7 +329,6 @@ function setupEventListeners() {
         saveSecuritySettings.addEventListener('click', handleSaveSecuritySettings);
     }
 
-    // Close modals when clicking outside
     window.addEventListener('click', function(e) {
         if (e.target.classList.contains('modal')) {
             e.target.style.display = 'none';
@@ -392,7 +336,7 @@ function setupEventListeners() {
     });
 }
 
-// Load page content based on navigation
+// Load page content
 function loadPageContent(page) {
     switch(page) {
         case 'dashboard':
@@ -417,10 +361,16 @@ function loadPageContent(page) {
 function loadTabContent(tabId) {
     switch(tabId) {
         case 'all-users':
+            loadUsers('all-users');
+            break;
         case 'sellers':
+            loadUsers('sellers');
+            break;
         case 'buyers':
+            loadUsers('buyers');
+            break;
         case 'admins':
-            loadUsers(tabId);
+            loadUsers('admins');
             break;
         case 'pending-cars':
         case 'approved-cars':
@@ -433,32 +383,26 @@ function loadTabContent(tabId) {
 // Load Dashboard Data
 async function loadDashboardData() {
     try {
-        // Get total users
         const usersSnapshot = await db.collection('users').get();
         const totalUsers = usersSnapshot.size;
         document.getElementById('total-users').textContent = totalUsers.toLocaleString();
 
-        // Get pending approvals (cars with status 'pending')
         const pendingCarsSnapshot = await db.collection('cars').where('status', '==', 'pending').get();
         const pendingApprovals = pendingCarsSnapshot.size;
         document.getElementById('pending-approvals').textContent = pendingApprovals;
 
-        // Get active auctions
         const activeAuctionsSnapshot = await db.collection('auctions').where('status', '==', 'active').get();
         const activeAuctions = activeAuctionsSnapshot.size;
         document.getElementById('active-auctions').textContent = activeAuctions;
 
-        // Calculate total revenue
         const totalRevenue = await calculateTotalRevenue();
         document.getElementById('total-revenue').textContent = `R${totalRevenue.toLocaleString()}`;
 
-        // Update stats grid
         document.getElementById('new-cars-listed').textContent = await getNewCarsCount();
         document.getElementById('deals-closed').textContent = await getDealsClosedCount();
         document.getElementById('pending-issues').textContent = pendingApprovals;
         document.getElementById('rejected-listings').textContent = await getRejectedCarsCount();
 
-        // Update recent activity
         await loadRecentActivity();
 
     } catch (error) {
@@ -467,7 +411,6 @@ async function loadDashboardData() {
     }
 }
 
-// Get counts for dashboard stats
 async function getNewCarsCount() {
     try {
         const oneWeekAgo = new Date();
@@ -510,7 +453,6 @@ async function getRejectedCarsCount() {
     }
 }
 
-// Calculate Total Revenue
 async function calculateTotalRevenue() {
     try {
         const completedAuctions = await db.collection('auctions')
@@ -530,7 +472,6 @@ async function calculateTotalRevenue() {
     }
 }
 
-// Load Recent Activity
 async function loadRecentActivity() {
     try {
         const activityBody = document.getElementById('recent-activity-body');
@@ -538,7 +479,6 @@ async function loadRecentActivity() {
         
         activityBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
 
-        // Get recent users (last 5)
         const usersSnapshot = await db.collection('users')
             .orderBy('createdAt', 'desc')
             .limit(5)
@@ -575,26 +515,38 @@ async function loadRecentActivity() {
     }
 }
 
-// Load Users with optional filter
+// Load Users
 async function loadUsers(filter = 'all-users') {
     try {
         const usersTableBody = document.getElementById('users-table-body');
-        if (!usersTableBody) return;
+        if (!usersTableBody) {
+            console.error('users-table-body not found');
+            return;
+        }
         
         usersTableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading...</td></tr>';
 
         let query = db.collection('users');
         
-        // Apply filter
+        // Parse the filter correctly
+        let roleFilter = null;
         if (filter === 'sellers') {
-            query = query.where('role', '==', 'seller');
+            roleFilter = 'seller';
         } else if (filter === 'buyers') {
-            query = query.where('role', '==', 'buyer');
+            roleFilter = 'buyer';
         } else if (filter === 'admins') {
-            query = query.where('role', '==', 'admin');
+            roleFilter = 'admin';
+        }
+        
+        // Apply filter if not "all-users"
+        if (roleFilter) {
+            console.log('Filtering by role:', roleFilter);
+            query = query.where('role', '==', roleFilter);
         }
         
         const usersSnapshot = await query.get();
+        
+        console.log(`Found ${usersSnapshot.size} users for filter: ${filter}`);
         
         usersTableBody.innerHTML = '';
         
@@ -615,12 +567,14 @@ async function loadUsers(filter = 'all-users') {
                 <td>${formatDate(user.createdAt?.toDate())}</td>
                 <td><span class="status-badge status-active">Active</span></td>
                 <td>
-                    <button class="btn btn-sm btn-outline" onclick="editUser('${doc.id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteUser('${doc.id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn btn-sm btn-outline" onclick="editUser('${doc.id}', '${(user.name || '').replace(/'/g, "\\'")}', '${user.email}', '${user.role}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser('${doc.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             `;
             
@@ -650,7 +604,7 @@ async function loadCarsByStatus(tabId) {
     await loadPendingCars(status);
 }
 
-// Load Pending Cars (with optional status filter)
+// Load Cars
 async function loadPendingCars(status = 'pending') {
     try {
         const pendingCarsBody = document.getElementById('pending-cars-body');
@@ -693,17 +647,19 @@ async function loadPendingCars(status = 'pending') {
                 <td>R${(car.price || 0).toLocaleString()}</td>
                 <td>${formatDate(car.createdAt?.toDate())}</td>
                 <td>
-                    ${status === 'pending' ? `
-                        <button class="btn btn-sm btn-success" onclick="approveCar('${doc.id}')">
-                            <i class="fas fa-check"></i> Approve
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        ${status === 'pending' ? `
+                            <button class="btn btn-sm btn-success" onclick="approveCar('${doc.id}')">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="rejectCar('${doc.id}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-sm btn-outline" onclick="viewCar('${doc.id}')">
+                            <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="rejectCar('${doc.id}')">
-                            <i class="fas fa-times"></i> Reject
-                        </button>
-                    ` : ''}
-                    <button class="btn btn-sm btn-outline" onclick="viewCar('${doc.id}')">
-                        <i class="fas fa-eye"></i> View
-                    </button>
+                    </div>
                 </td>
             `;
             
@@ -770,12 +726,14 @@ async function loadAuctions() {
                 <td>${calculateTimeLeft(auction.endTime?.toDate())}</td>
                 <td><span class="status-badge status-${auction.status || 'inactive'}">${auction.status || 'Inactive'}</span></td>
                 <td>
-                    <button class="btn btn-sm btn-outline" onclick="viewAuction('${doc.id}')">
-                        <i class="fas fa-eye"></i> View
-                    </button>
-                    <button class="btn btn-sm btn-warning" onclick="toggleAuction('${doc.id}', '${auction.status}')">
-                        <i class="fas fa-${auction.status === 'active' ? 'pause' : 'play'}"></i>
-                    </button>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn btn-sm btn-outline" onclick="viewAuction('${doc.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="toggleAuction('${doc.id}', '${auction.status}')">
+                            <i class="fas fa-${auction.status === 'active' ? 'pause' : 'play'}"></i>
+                        </button>
+                    </div>
                 </td>
             `;
             
@@ -791,48 +749,103 @@ async function loadAuctions() {
     }
 }
 
-// Handle Add User
+// Handle Add User - Using Firebase Cloud Function approach
 async function handleAddUser(e) {
     e.preventDefault();
     
-    const name = document.getElementById('user-name').value;
-    const email = document.getElementById('user-email').value;
-    const role = document.getElementById('user-role').value;
-    const password = document.getElementById('user-password').value;
+    console.log('Add user form submitted');
+    
+    const nameInput = document.getElementById('user-name');
+    const emailInput = document.getElementById('user-email');
+    const roleInput = document.getElementById('user-role');
+    const passwordInput = document.getElementById('user-password');
+    
+    console.log('Form elements found:', {
+        nameInput: nameInput,
+        emailInput: emailInput,
+        roleInput: roleInput,
+        passwordInput: passwordInput
+    });
+
+    if (!nameInput || !emailInput || !roleInput || !passwordInput) {
+        console.error('Missing form elements');
+        alert('Form error: One or more fields are missing.');
+        return;
+    }
+
+    const name = nameInput.value ? nameInput.value.trim() : '';
+    const email = emailInput.value ? emailInput.value.trim() : '';
+    const role = roleInput.value;
+    const password = passwordInput.value;
+
+    console.log('Form values:', { name, email, role, passwordLength: password.length });
+
+    if (!name || !email || !role || !password) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    if (password.length < 6) {
+        alert('Password must be at least 6 characters');
+        return;
+    }
+
     const submitBtn = e.target.querySelector('button[type="submit"]');
 
     try {
-        submitBtn.disabled = true;
-        document.getElementById('create-user-text').classList.add('hidden');
-        document.getElementById('create-user-loading').classList.remove('hidden');
+        if (submitBtn) submitBtn.disabled = true;
+        
+        const createText = document.getElementById('create-user-text');
+        const createLoading = document.getElementById('create-user-loading');
+        
+        if (createText) createText.classList.add('hidden');
+        if (createLoading) createLoading.classList.remove('hidden');
 
-        // Create user in Firebase Auth
+        console.log('Creating user in Firebase Auth...');
+
+        const currentUserId = currentUser.uid;
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
+        const newUser = userCredential.user;
 
-        // Create user document in Firestore
-        await db.collection('users').doc(user.uid).set({
+        console.log('User created in Auth, saving to Firestore...');
+
+        await db.collection('users').doc(newUser.uid).set({
             name: name,
             email: email,
             role: role,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdBy: currentUserId
         });
 
-        showNotification('User created successfully!', 'success');
-        document.getElementById('add-user-modal').style.display = 'none';
-        document.getElementById('add-user-form').reset();
-        
-        // Reload users list
-        loadUsers();
+        console.log('User saved to Firestore, signing out...');
+        await auth.signOut();
+
+        alert('User created successfully! You will be redirected to login.');
+        window.location.href = '../html/login.html';
 
     } catch (error) {
         console.error('Error creating user:', error);
-        showNotification('Error creating user: ' + error.message, 'error');
-    } finally {
-        submitBtn.disabled = false;
-        document.getElementById('create-user-text').classList.remove('hidden');
-        document.getElementById('create-user-loading').classList.add('hidden');
+        
+        let errorMessage = 'Error: ';
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage += 'This email is already registered';
+        } else if (error.code === 'auth/invalid-email') {
+            errorMessage += 'Invalid email address';
+        } else if (error.code === 'auth/weak-password') {
+            errorMessage += 'Password is too weak';
+        } else {
+            errorMessage += error.message;
+        }
+        
+        alert(errorMessage);
+        
+        if (submitBtn) submitBtn.disabled = false;
+        const createText = document.getElementById('create-user-text');
+        const createLoading = document.getElementById('create-user-loading');
+        
+        if (createText) createText.classList.remove('hidden');
+        if (createLoading) createLoading.classList.add('hidden');
     }
 }
 
@@ -852,7 +865,6 @@ async function handleCreateAuction(e) {
         document.getElementById('create-auction-text').classList.add('hidden');
         document.getElementById('create-auction-loading').classList.remove('hidden');
 
-        // Get car details
         const carDoc = await db.collection('cars').doc(carId).get();
         if (!carDoc.exists) {
             throw new Error('Car not found');
@@ -860,7 +872,6 @@ async function handleCreateAuction(e) {
         
         const car = carDoc.data();
 
-        // Create auction document
         const auctionData = {
             carId: carId,
             sellerId: car.sellerId,
@@ -876,7 +887,6 @@ async function handleCreateAuction(e) {
 
         await db.collection('auctions').add(auctionData);
 
-        // Update car status to 'onAuction'
         await db.collection('cars').doc(carId).update({
             status: 'onAuction',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -886,7 +896,6 @@ async function handleCreateAuction(e) {
         document.getElementById('create-auction-modal').style.display = 'none';
         document.getElementById('create-auction-form').reset();
         
-        // Reload auctions list
         loadAuctions();
 
     } catch (error) {
@@ -899,7 +908,7 @@ async function handleCreateAuction(e) {
     }
 }
 
-// Load Cars for Auction Creation
+// Load Cars for Auction
 async function loadCarsForAuction() {
     try {
         const auctionCarSelect = document.getElementById('auction-car');
@@ -974,12 +983,12 @@ async function rejectCar(carId) {
     }
 }
 
-// Admin Car Creation Function
+// Admin Car Creation
 async function adminAddCar(carData) {
     try {
         const carDoc = await db.collection('cars').add({
             ...carData,
-            status: 'approved', // Auto-approve admin-added cars
+            status: 'approved',
             sellerId: currentUser.uid,
             sellerName: currentUser.name,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -999,7 +1008,6 @@ function showAddCarModal() {
     const modal = document.getElementById('add-car-modal');
     if (modal) {
         modal.style.display = 'flex';
-        // Reset form
         document.getElementById('add-car-form').reset();
     }
 }
@@ -1009,31 +1017,93 @@ async function deleteUser(userId) {
     if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
         try {
             await db.collection('users').doc(userId).delete();
-            showNotification('User deleted successfully!', 'success');
+            
+            showNotification('User deleted successfully! Note: Firebase Auth account still exists.', 'success');
             loadUsers();
             loadDashboardData();
         } catch (error) {
             console.error('Error deleting user:', error);
-            showNotification('Error deleting user', 'error');
+            showNotification('Error deleting user: ' + error.message, 'error');
         }
     }
 }
 
-function editUser(userId) {
-    showNotification('Edit user functionality coming soon', 'info');
-    // TODO: Implement edit user modal and functionality
+function editUser(userId, userName, userEmail, userRole) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit User</h2>
+                <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
+            </div>
+            <form id="edit-user-form">
+                <div class="form-group">
+                    <label for="edit-user-name">Full Name</label>
+                    <input type="text" id="edit-user-name" class="form-control" value="${userName}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-email">Email Address</label>
+                    <input type="email" id="edit-user-email" class="form-control" value="${userEmail}" disabled>
+                    <small style="color: var(--gray);">Email cannot be changed</small>
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-role">User Role</label>
+                    <select id="edit-user-role" class="form-control" required>
+                        <option value="buyer" ${userRole === 'buyer' ? 'selected' : ''}>Buyer</option>
+                        <option value="seller" ${userRole === 'seller' ? 'selected' : ''}>Seller</option>
+                        <option value="admin" ${userRole === 'admin' ? 'selected' : ''}>Administrator</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        Update User
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const newName = document.getElementById('edit-user-name').value.trim();
+        const newRole = document.getElementById('edit-user-role').value;
+        
+        try {
+            await db.collection('users').doc(userId).update({
+                name: newName,
+                role: newRole,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            showNotification('User updated successfully!', 'success');
+            modal.remove();
+            loadUsers();
+        } catch (error) {
+            console.error('Error updating user:', error);
+            showNotification('Error updating user: ' + error.message, 'error');
+        }
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
 }
 
 // Car Management Functions
 function viewCar(carId) {
     showNotification('View car details functionality coming soon', 'info');
-    // TODO: Implement view car modal with full details
 }
 
 // Auction Management Functions
 function viewAuction(auctionId) {
     showNotification('View auction details functionality coming soon', 'info');
-    // TODO: Implement view auction modal with full details
 }
 
 async function toggleAuction(auctionId, currentStatus) {
@@ -1063,7 +1133,6 @@ async function handleSaveGeneralSettings() {
         const adminEmail = document.getElementById('admin-email').value;
         const commissionRate = document.getElementById('commission-rate').value;
         
-        // Save to Firestore settings collection
         await db.collection('settings').doc('general').set({
             siteName: siteName,
             adminEmail: adminEmail,
@@ -1085,7 +1154,6 @@ async function handleSaveSecuritySettings() {
         const maxLoginAttempts = document.getElementById('max-login-attempts').value;
         const passwordExpiry = document.getElementById('password-expiry').value;
         
-        // Save to Firestore settings collection
         await db.collection('settings').doc('security').set({
             sessionTimeout: parseInt(sessionTimeout),
             maxLoginAttempts: parseInt(maxLoginAttempts),
@@ -1104,7 +1172,6 @@ async function handleSaveSecuritySettings() {
 // Load Reports
 function loadReports() {
     console.log('Loading reports...');
-    // Charts are already initialized, just update with real data if needed
     showNotification('Reports loaded successfully', 'success');
 }
 
@@ -1151,8 +1218,55 @@ function calculateTimeLeft(endDate) {
 }
 
 function showNotification(message, type = 'info') {
-    // Simple alert for now - can be enhanced with custom notification UI
-    alert(message);
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+        max-width: 400px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    `;
+    
+    const colors = {
+        success: '#06d6a0',
+        error: '#ef476f',
+        warning: '#ffd166',
+        info: '#3a86ff'
+    };
+    
+    notification.style.backgroundColor = colors[type] || colors.info;
+    notification.textContent = message;
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideIn 0.3s ease-out reverse';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 4000);
+    
     console.log(`[${type.toUpperCase()}] ${message}`);
 }
 
